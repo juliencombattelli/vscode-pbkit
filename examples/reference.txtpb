@@ -1,0 +1,143 @@
+example {
+    convolution_benchmark {
+        label: "NHWC_128x20x20x56x160"
+        input {
+            dimension: [128, 56, 20, 20]
+            data_type: DATA_HALF
+            format: TENSOR_NHWC
+        }
+    }
+}
+
+parsing_overview {
+    value: -2.0   # Valid: no additional whitespace.
+    value: - 2.0  # Valid: whitespace between '-' and '2.0'.
+    value: -
+    # comment
+    2.0           # Valid: whitespace and comments between '-' and '2.0'.
+
+    foo: 10 bar: 20           # Valid: whitespace separates '10' and 'bar'
+    foo: 10,bar: 20           # Valid: ',' separates '10' and 'bar'
+    foo: 10[com.foo.ext]: 20  # Valid: '10' is followed immediately by '[', which is
+                              # not an identifier.
+}
+
+lexical_elements {
+    value: 10   # '10' is parsed as a DEC_INT token.
+    value: 10f  # '10f' is parsed as a FLOAT token, despite containing '10' which
+                # would also match DEC_INT. In this case, FLOAT matches a longer
+                # subsequence of the input.
+
+    numeric_literals {
+        foo: 10    # This is an integer value.
+        foo: 10f   # This is a floating-point value.
+        foo: 1.0f  # Also optional for floating-point literals.
+    }
+
+    string_literals {
+        quote:
+            "When we got into office, the thing that surprised me most was to find "
+            "that things were just as bad as we'd been saying they were.\n\n"
+            "  -- John F. Kennedy"
+    }
+}
+
+syntax_elements {
+    literals {
+        a_string: "first part" 'second part'
+                  "third part"
+        no_whitespace: "first""second"'third''fourth'
+    }
+
+    field_names {
+        reg_scalar: 10
+        reg_message { foo: "bar" }
+
+        [com.foo.ext.scalar]: 10
+        [com.foo.ext.message] { foo: "bar" }
+
+        any_value {
+            [type.googleapis.com/com.foo.any] { foo: "bar" }
+        }
+    }
+
+    fields {
+        scalar: 10          # Valid
+        # scalar  10          # Invalid
+        scalars: [1, 2, 3]  # Valid
+        # scalars  [1, 2, 3]  # Invalid
+        message: {}         # Valid
+        message  {}         # Valid
+        messages: [{}, {}]  # Valid
+        messages  [{}, {}]  # Valid
+
+        message: { foo: "bar" }
+        message: < foo: "bar" >
+
+        repeated_field: 1
+        repeated_field: 2
+        repeated_field: [3, 4, 5]
+        repeated_field: 6
+        repeated_field: [7, 8, 9]
+    }
+}
+
+extension_fields {
+    local_field: 10
+    [com.example.ext_field]: 20
+}
+
+any_fields {
+    local_field: 10
+
+    # An Any value using regular fields.
+    any_value {
+        type_url: "type.googleapis.com/com.example.SomeType"
+        value: "\x0a\x05hello"  # serialized bytes of com.example.SomeType
+    }
+
+    # The same value using Any expansion
+    any_value {
+        [type.googleapis.com/com.example.SomeType] {
+            field1: "hello"
+        }
+    }
+}
+
+group_fields {
+    MyGroup {
+        my_value: 1
+    }
+}
+
+map_fields {
+    my_map { key: "entry1" value: 1 }
+    my_map { key: "entry2" value: 2 }
+
+    # You can also use the list syntax
+    my_map: [
+        { key: "entry3" value: 3 },
+        { key: "entry4" value: 4 }
+    ]
+}
+
+oneof_fields {
+    # Valid: only one field from the Example oneof is set.
+    message {
+        not_part_of_oneof: "always valid"
+        first_oneof_field: "valid by itself"
+    }
+
+    # Valid: the other oneof field is set.
+    message {
+        not_part_of_oneof: "always valid"
+        second_oneof_field: "valid by itself"
+    }
+
+    # Invalid: multiple fields from the Example oneof are set.
+    message {
+        not_part_of_oneof: "always valid"
+        first_oneof_field: "not valid"
+        second_oneof_field: "not valid"
+    }
+}
